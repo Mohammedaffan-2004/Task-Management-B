@@ -40,11 +40,12 @@ try {
 
 
 const allowedOrigins = (process.env.CORS_ORIGIN ||
-  "http://localhost:5173,https://your-frontend.vercel.app"
+  "http://localhost:5173,https://task-management-a-five.vercel.app"
 )
   .split(",")
   .map(origin => origin.trim());
 
+  
 
 app.use(
   cors({
