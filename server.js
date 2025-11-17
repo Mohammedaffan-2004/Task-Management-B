@@ -23,13 +23,10 @@ const analyticsRoutes = require("./routes/analyticsRoutes");
 const app = express();
 const server = http.createServer(app);
 
-// ✨ REQUIRED for secure cookies on Render (behind proxy)
 app.set("trust proxy", 1);
 
-// DB connection
 connectDB();
 
-// Socket
 let io;
 try {
   io = setupSocket(server);
@@ -39,14 +36,12 @@ try {
   console.error("⚠️ Socket.io initialization failed:", err.message);
 }
 
-// Allowed origins (from env or fallback)
 const allowedOrigins = (process.env.CORS_ORIGIN ||
   "http://localhost:5173,https://task-management-a-five.vercel.app"
 )
   .split(",")
   .map(origin => origin.trim());
 
-// CORS FIX (cross-site cookies)
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -59,7 +54,6 @@ app.use(
   })
 );
 
-// Body, cookies, security
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 app.use(helmet());
@@ -70,7 +64,6 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-// Rate limiters
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
@@ -86,7 +79,6 @@ const authLimiter = rateLimit({
 
 app.use(generalLimiter);
 
-// Health & base
 app.get("/", (req, res) => {
   res.json({ message: "🚀 TaskFlow Backend API is running!" });
 });
@@ -100,7 +92,6 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Routes
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
 app.use("/api/auth", authRoutes);
@@ -109,7 +100,6 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/activities", activityRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -117,10 +107,8 @@ app.use((req, res) => {
   });
 });
 
-// Error middleware
 app.use(errorHandler);
 
-// Start server
 const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => {
   console.log(`\n=====================================`);
@@ -130,15 +118,14 @@ server.listen(PORT, () => {
   console.log(`=====================================\n`);
 });
 
-// Graceful shutdown
 process.on("unhandledRejection", (err) => {
   console.error(`💥 Unhandled Rejection: ${err.message}`);
   server.close(() => process.exit(1));
 });
 
 process.on("SIGTERM", () => {
-  console.log("🧹 SIGTERM received. Closing server gracefully...");
+  console.log("SIGTERM received. Closing server gracefully...");
   server.close(() => {
-    console.log("✅ Server closed. Bye!");
+    console.log(" Server closed. Bye!");
   });
 });

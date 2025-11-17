@@ -4,13 +4,11 @@ const Activity = require("../models/Activity");
 const asyncHandler = require("../utils/asyncHandler");
 const emitUpdates = require("../utils/emitHelper");
 
-// @desc Create a new task (Admin/Manager)
-// @route POST /api/tasks
-// @access Private/Admin/Manager
+
 const createTask = asyncHandler(async (req, res) => {
   const { title, description, status, projectId, assignedTo, dueDate } = req.body;
 
-  // Validate required fields
+ 
   if (!title?.trim()) {
     return res.status(400).json({ message: "Task title is required" });
   }
@@ -19,13 +17,13 @@ const createTask = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Project is required" });
   }
 
-  // Check if project exists
+ 
   const project = await Project.findById(projectId);
   if (!project) {
     return res.status(404).json({ message: "Project not found" });
   }
 
-  // Create task
+ 
   const task = await Task.create({
     title: title.trim(),
     description: description?.trim() || "",
@@ -36,14 +34,14 @@ const createTask = asyncHandler(async (req, res) => {
     createdBy: req.user._id,
   });
 
-  // Populate related fields
+ 
   await task.populate([
     { path: "projectId", select: "title" },
     { path: "assignedTo", select: "name email" },
     { path: "createdBy", select: "name email" },
   ]);
 
-  // Log activity
+ 
   await Activity.create({
     user: req.user._id,
     action: `created a new task "${task.title}"`,
@@ -55,9 +53,7 @@ const createTask = asyncHandler(async (req, res) => {
   res.status(201).json(task);
 });
 
-// @desc Get all tasks (Admin/Manager only)
-// @route GET /api/tasks
-// @access Private/Admin/Manager
+
 const getTasks = asyncHandler(async (req, res) => {
   const { page = 1, limit = 100, status, projectId } = req.query;
   let filter = {};
@@ -76,9 +72,7 @@ const getTasks = asyncHandler(async (req, res) => {
   res.json(tasks);
 });
 
-// @desc Get my assigned tasks (Member)
-// @route GET /api/tasks/my-tasks
-// @access Private
+
 const getMyTasks = asyncHandler(async (req, res) => {
   const tasks = await Task.find({ assignedTo: req.user._id })
     .populate("projectId", "title")
@@ -89,9 +83,7 @@ const getMyTasks = asyncHandler(async (req, res) => {
   res.json(tasks);
 });
 
-// @desc Get task by ID
-// @route GET /api/tasks/:id
-// @access Private
+
 const getTaskById = asyncHandler(async (req, res) => {
   const task = await Task.findById(req.params.id)
     .populate("projectId", "title")
@@ -102,7 +94,7 @@ const getTaskById = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Task not found" });
   }
 
-  // Check access permissions
+ 
   const isAdminOrManager = ["Admin", "Manager"].includes(req.user.role);
   const isAssignee = task.assignedTo?._id.toString() === req.user._id.toString();
 
@@ -113,9 +105,7 @@ const getTaskById = asyncHandler(async (req, res) => {
   res.json(task);
 });
 
-// @desc Update task
-// @route PUT /api/tasks/:id
-// @access Private
+
 const updateTask = asyncHandler(async (req, res) => {
   const task = await Task.findById(req.params.id);
   
@@ -123,7 +113,7 @@ const updateTask = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Task not found" });
   }
 
-  // Check access permissions
+
   const isAdminOrManager = ["Admin", "Manager"].includes(req.user.role);
   const isAssignee = task.assignedTo?.toString() === req.user._id.toString();
 
@@ -131,12 +121,12 @@ const updateTask = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Not authorized to update this task" });
   }
 
-  // Define allowed fields based on role
+  
   const allowedFields = isAdminOrManager
     ? ["title", "description", "status", "dueDate", "assignedTo", "projectId"]
-    : ["status", "description"]; // Members can only update status and description
+    : ["status", "description"]; 
 
-  // Update allowed fields
+  
   Object.keys(req.body).forEach((key) => {
     if (allowedFields.includes(key)) {
       task[key] = req.body[key];
@@ -145,14 +135,14 @@ const updateTask = asyncHandler(async (req, res) => {
 
   const updated = await task.save();
   
-  // Populate related fields
+
   await updated.populate([
     { path: "projectId", select: "title" },
     { path: "assignedTo", select: "name email" },
     { path: "createdBy", select: "name email" },
   ]);
 
-  // Log activity
+
   await Activity.create({
     user: req.user._id,
     action: `updated task "${task.title}"`,
@@ -164,9 +154,7 @@ const updateTask = asyncHandler(async (req, res) => {
   res.json(updated);
 });
 
-// @desc Delete task (Admin/Manager only)
-// @route DELETE /api/tasks/:id
-// @access Private/Admin/Manager
+
 const deleteTask = asyncHandler(async (req, res) => {
   const task = await Task.findById(req.params.id);
   
@@ -177,7 +165,7 @@ const deleteTask = asyncHandler(async (req, res) => {
   const taskTitle = task.title;
   await task.deleteOne();
 
-  // Log activity
+ 
   await Activity.create({
     user: req.user._id,
     action: `deleted task "${taskTitle}"`,
