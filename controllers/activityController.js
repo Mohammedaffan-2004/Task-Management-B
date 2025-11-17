@@ -18,7 +18,7 @@ const getActivities = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .limit(Number(limit));
 
-  d
+  
   const formattedActivities = activities.map(act => ({
     _id: act._id,
     user: act.user,
