@@ -17,7 +17,8 @@ router.use(protect);
 router.post("/", authorizeRoles("Admin", "Manager"), createTask);
 
 
-router.get("/", authorizeRoles("Admin", "Manager"), getTasks);
+// router.get("/", authorizeRoles("Admin", "Manager"), getTasks);
+router.get("/", getTasks);
 
 
 router.get("/my-tasks", getMyTasks);

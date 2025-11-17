@@ -54,12 +54,40 @@ const createTask = asyncHandler(async (req, res) => {
 });
 
 
+// const getTasks = asyncHandler(async (req, res) => {
+//   const { page = 1, limit = 100, status, projectId } = req.query;
+//   let filter = {};
+
+//   if (status) filter.status = status;
+//   if (projectId) filter.projectId = projectId;
+
+//   const tasks = await Task.find(filter)
+//     .populate("projectId", "title")
+//     .populate("assignedTo", "name email")
+//     .populate("createdBy", "name email")
+//     .sort({ createdAt: -1 })
+//     .skip((page - 1) * limit)
+//     .limit(Number(limit));
+
+//   res.json(tasks);
+// });
+
 const getTasks = asyncHandler(async (req, res) => {
   const { page = 1, limit = 100, status, projectId } = req.query;
   let filter = {};
 
-  if (status) filter.status = status;
-  if (projectId) filter.projectId = projectId;
+  // 🔹 Role-based filter (THIS FIXES YOUR PROBLEM)
+  if (req.user.role === "Admin" || req.user.role === "Manager") {
+    // Admin/Manager → see all tasks
+    if (status) filter.status = status;
+    if (projectId) filter.projectId = projectId;
+  } else {
+    // Member/User → see ONLY tasks assigned to them
+    filter.assignedTo = req.user._id;
+
+    if (status) filter.status = status;
+    if (projectId) filter.projectId = projectId;
+  }
 
   const tasks = await Task.find(filter)
     .populate("projectId", "title")
